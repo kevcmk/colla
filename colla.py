@@ -2,17 +2,38 @@
 
 from PIL import Image
 
+import multiprocessing
+try:
+    cpus = multiprocessing.cpu_count()
+except NotImplementedError:
+    print("Failed to detect number of CPUs, assuming 2")
+    cpus = 2   # arbitrary default
+
+
 import os, sys
-import json
+import time
 
 def main():
+    for num_images in [4, 8, 16, 32]:
+        for processes in [8, 4, 2, 1]:
+            start = time.time()
+            grid(num_images=num_images, processes=processes)
+            print("{}s for {} images on {} processes".format(time.time() - start, num_images, processes))
+
+
+def grid(num_images, processes):
+
     base = "/Users/katz/Desktop/Tria/2014"
 
-    image_paths = [os.path.join(base, x) for x in os.listdir(base)[:12]]
-    images = [Image.open(x) for x in image_paths]
-    squares = [crop_square(x) for x in images]
+    pool = multiprocessing.Pool(processes=processes)
+
+    image_paths = [os.path.join(base, x) for x in os.listdir(base)[:num_images]]
+
+    images = pool.map(Image.open, image_paths)
+    squares = pool.map(crop_square, images)
+
     dimensions = [(x.width, x.height) for x in squares]
-    print('\n'.join(['{} x {}'.format(x[0], x[1]) for x in dimensions]))
+    # print('\n'.join(['{} x {}'.format(x[0], x[1]) for x in dimensions]))
 
 
 
@@ -44,6 +65,7 @@ if __name__ == '__main__':
               Image.new('RGB', (300, 300))]:
         assert crop_square(i).width == 300
         assert crop_square(i).height == 300
+
 
     main()
 
