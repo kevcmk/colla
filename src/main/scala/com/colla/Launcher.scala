@@ -28,9 +28,9 @@ object Launcher {
         ProcessStarter.setGlobalSearchPath("/usr/local/opt/imagemagick@6/bin")
 
         val dirs = Seq(
-            "/Users/katz/Desktop/tria/2014"
-            // "/Users/katz/Desktop/tria/2015"
-            // "/Users/katz/Desktop/tria/2016a"
+            "/Users/katz/Desktop/tria/2014",
+            "/Users/katz/Desktop/tria/2015",
+            "/Users/katz/Desktop/tria/2016"
         )
 
         // pickleMetadata(dirs)
@@ -54,8 +54,6 @@ object Launcher {
             // Select a random sample
 
             Random.setSeed(42)
-
-
             val metaSelection = metadata
               .filter(_.dateTime.isDefined) // Filter all that had invalid datetimes
               // .filter(_.crop.width > 1280) // Filter all that are > 1280
@@ -115,13 +113,21 @@ object Launcher {
         val cmd = new ConvertCmd();
 
         metadata.foreach { m =>
-            val op = new IMOperation()
-            op.addImage(m.path) // Input placeholder
-            op.crop(m.crop.width, m.crop.height, m.crop.x, m.crop.y)
-            op.resize(256, 256)
-            op.addImage(m.path.replace(".jpg", ".crop.256.jpg"))
-            logger.debug(s"Running ${op.toString}")
-            cmd.run(op)
+
+            val outPath = m.path.replace(".jpg", ".crop.256.jpg")
+
+            if (!File(outPath).exists) {
+                    val op = new IMOperation()
+                    op.addImage(m.path) // Input placeholder
+                    op.crop(m.crop.width, m.crop.height, m.crop.x, m.crop.y)
+                    op.resize(256, 256)
+                    op.addImage(outPath)
+                    logger.debug(s"Running ${op.toString}")
+                    cmd.run(op)
+            } else {
+                logger.debug(s"Skipping ${outPath} (exists)")
+            }
+
         }
 
     }
