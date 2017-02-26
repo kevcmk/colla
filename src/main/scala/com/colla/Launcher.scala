@@ -28,7 +28,7 @@ object Launcher {
         ProcessStarter.setGlobalSearchPath("/usr/local/opt/imagemagick@6/bin")
 
         val dirs = Seq(
-            "/Users/katz/Desktop/tria/2014",
+            // "/Users/katz/Desktop/tria/2014",
             "/Users/katz/Desktop/tria/2015",
             "/Users/katz/Desktop/tria/2016"
         )
@@ -56,6 +56,7 @@ object Launcher {
             Random.setSeed(42)
             val metaSelection = metadata
               .filter(_.dateTime.isDefined) // Filter all that had invalid datetimes
+              .filter(!_.path.contains("crop"))
               // .filter(_.crop.width > 1280) // Filter all that are > 1280
               .map(x => (Random.nextFloat(), x))
               .sortBy(_._1)
