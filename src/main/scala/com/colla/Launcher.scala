@@ -5,7 +5,7 @@ import java.util.Date
 
 import better.files.File
 import org.im4java.core
-import org.im4java.core.{ConvertCmd, IMOperation, Info}
+import org.im4java.core.{ConvertCmd, IMOperation, Info, MontageCmd}
 import org.im4java.process.ProcessStarter
 import org.im4java.utils.{ExtensionFilter, FilenameLoader}
 
@@ -28,12 +28,13 @@ object Launcher {
         ProcessStarter.setGlobalSearchPath("/usr/local/opt/imagemagick@6/bin")
 
         val dirs = Seq(
-            "/Users/katz/Desktop/tria/2014a",
-            "/Users/katz/Desktop/tria/2015a",
-            "/Users/katz/Desktop/tria/2016a"
+            "/Users/katz/Desktop/tria/2014"
+            // "/Users/katz/Desktop/tria/2015"
+            // "/Users/katz/Desktop/tria/2016a"
         )
 
         // pickleMetadata(dirs)
+
 
         dirs.map { sub =>
 
@@ -42,20 +43,22 @@ object Launcher {
 
             logger.debug("Total Size " + metadata.size)
 
+            val targetCount = 1386
+
             // Select the largest squares
             //            val metaSelection = metaAll.toSeq
             //              .sortBy { x => x.crop.height }
             //              .reverse
-            //              .take(1386)
+            //              .take(targetCount)
 
             // Select a random sample
 
             Random.setSeed(42)
-            val targetCount = 1386
+
 
             val metaSelection = metadata
               .filter(_.dateTime.isDefined) // Filter all that had invalid datetimes
-              .filter(_.crop.width > 1280) // Filter all that are > 1280
+              // .filter(_.crop.width > 1280) // Filter all that are > 1280
               .map(x => (Random.nextFloat(), x))
               .sortBy(_._1)
               .map(_._2)
@@ -71,14 +74,27 @@ object Launcher {
             logger.debug("Pruned to " + metaSelection.size)
 
             val targetDirectory = s"${sub}_cropped"
-            cropDirectory(sub, metaSelection)
+            cropAndResizeDirectory(sub, metaSelection)
+            gridDirectory(sub, metaSelection)
 
         }
 
 
     }
 
-    def cropDirectory(sourcePath: String, metadata: Seq[ImageMetadata]) = {
+    def gridDirectory(sourcePath: String, metadata: Seq[ImageMetadata]) = {
+        val cmd = new MontageCmd()
+        val croppedAndResizedPaths = metadata.sortBy(_.dateTime).map(x => x.path.replace(".jpg", ".crop.256.jpg"))
+        val op = new IMOperation()
+        op.addRawArgs("-geometry", "+0+0")
+        op.addRawArgs("-tile", "42x33")
+        croppedAndResizedPaths.foreach(x => op.addImage(x))
+        op.addImage(sourcePath + "/montage.jpg")
+        logger.debug(s"Running ${op.toString.substring(0, 256)}")
+        cmd.run(op)
+    }
+
+    def cropAndResizeDirectory(sourcePath: String, metadata: Seq[ImageMetadata]) = {
 
         // Minimum Pixel Edge Width
         val minCrop = metadata
@@ -102,14 +118,11 @@ object Launcher {
             val op = new IMOperation()
             op.addImage(m.path) // Input placeholder
             op.crop(m.crop.width, m.crop.height, m.crop.x, m.crop.y)
-            op.resize(minCrop, minCrop)
-            op.addImage(m.path.replace(".jpg", ".crop.resize.jpg"))
+            op.resize(256, 256)
+            op.addImage(m.path.replace(".jpg", ".crop.256.jpg"))
             logger.debug(s"Running ${op.toString}")
             cmd.run(op)
         }
-
-
-
 
     }
 
