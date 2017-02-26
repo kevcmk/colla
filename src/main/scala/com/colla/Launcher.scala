@@ -14,7 +14,7 @@ import scala.pickling.{functions, json}
 import scala.pickling.json._
 import scala.pickling.json.JSONPickle
 import scala.util.Random
-import com.typesafe.scalalogging
+import com.typesafe.scalalogging.Logger
 
 
 object Launcher {
@@ -104,7 +104,7 @@ object Launcher {
 
         op.size
 
-        logger.debug(images)
+        logger.debug(images.toString)
 
     }
 
