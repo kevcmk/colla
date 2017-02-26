@@ -1,10 +1,16 @@
 
+import java.nio.file.Path
 import java.time.LocalDateTime
 
 import better.files.File
 import org.im4java.core
 import org.im4java.core.{IMOperation, Info}
 import org.im4java.process.ProcessStarter
+
+import scala.pickling.Defaults._
+import scala.pickling.{functions, json}
+import scala.pickling.json._
+import scala.pickling.json.JSONPickle
 
 
 
@@ -16,21 +22,42 @@ object Launcher {
 
         ProcessStarter.setGlobalSearchPath("/usr/local/opt/imagemagick@6/bin")
 
-        pickleDimensions()
+        val dirs = Seq(
+            "/Users/katz/Desktop/tria/2014a",
+            "/Users/katz/Desktop/tria/2015a",
+            "/Users/katz/Desktop/tria/2016a"
+        )
+
+        pickleDimensions(dirs)
+
+        val dimensionMaps = dirs.map { sub =>
+            sub -> depickle(s"${sub}.pkl")
+        }.toMap
+
+        val dimensionSets = dimensionMaps.mapValues { x => x.values.toSet }
+
+        println(dimensionSets.map { x =>
+            val res = x._2.map { dimensions =>
+                s"${dimensions} -> ${crop_square(dimensions)}"
+            }.mkString("\n")
+            s"${x._1}:\n${res}"
+        }.mkString("\n\n"))
 
 
     }
 
+    def depickle(path: String) : Map[String, Dimensions] = {
+        functions.unpickle[Map[String, Dimensions]](json.JSONPickle(File(path).contentAsString))
+    }
 
-    def pickleDimensions() = {
 
-        import scala.pickling.Defaults._, scala.pickling.json._
+    def pickleDimensions(files: Seq[String]) = {
+
         val start = java.lang.System.currentTimeMillis()
-        val base = "/Users/katz/Desktop/tria"
 
-        val result = Seq("2014a", "2015a", "2016a").par.map { sub =>
+        val result = files.par.map { sub =>
 
-            val directory = File(s"${base}/${sub}")
+            val directory = File(sub)
 
             val images = directory.listRecursively.filter(_.extension().get == ".jpg").toSeq
             println(s"${sub} images: " + images.mkString(", "))
@@ -54,7 +81,7 @@ object Launcher {
                 path -> dimensions
             }.toMap.pickle
 
-            val outFile = File(s"${base}/${sub}.pkl").write(pkl.value)
+            val outFile = File(s"${sub}.pkl").write(pkl.value)
 
             val dict = pkl.unpickle[Map[String, Dimensions]]
             val sortedEquivalence = dict.keys.toSeq.sorted == images.map(x => x.path.toString).toSeq.sorted
@@ -87,8 +114,12 @@ object Launcher {
         }
     }
 
-    case class Dimensions(width: Int, height: Int)
+    case class Dimensions(width: Int, height: Int) {
+        override def toString = s"$width x $height"
+    }
 
-    case class CropBox(width: Int, height: Int, x: Int, y: Int)
+    case class CropBox(width: Int, height: Int, x: Int, y: Int) {
+        override def toString = s"$width $height $x $y"
+    }
 
 }
