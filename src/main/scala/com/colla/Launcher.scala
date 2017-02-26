@@ -16,17 +16,27 @@ object Launcher {
 
         ProcessStarter.setGlobalSearchPath("/usr/local/opt/imagemagick@6/bin")
 
+        pickleDimensions()
+
+
+    }
+
+
+    def pickleDimensions() = {
 
         import scala.pickling.Defaults._, scala.pickling.json._
-
         val start = java.lang.System.currentTimeMillis()
+        val base = "/Users/katz/Desktop/tria"
 
+        val result = Seq("2014a", "2015a", "2016a").par.map { sub =>
 
-        Seq("2014, 2015, 2016").foreach { folder =>
-            val base = "/Users/katz/Desktop/tria"
-            val directory = File(s"${base}/${folder}")
-            val total = directory.listRecursively.length.toFloat
-            val pkl = directory.listRecursively.zipWithIndex.map { x =>
+            val directory = File(s"${base}/${sub}")
+
+            val images = directory.listRecursively.filter(_.extension().get == ".jpg").toSeq
+            println(s"${sub} images: " + images.mkString(", "))
+
+            val total = images.length.toFloat
+            val pkl = images.zipWithIndex.map { x =>
 
                 val index = x._2
                 val path = x._1.path.toString
@@ -40,29 +50,29 @@ object Launcher {
                     case _ => (total - 1 - index) * (dt / (index + 1))
                 }
 
-                println(s"$dimensions | ${folder} ${index / total.toFloat} | ${dt} | ${remaining}s remaining")
+                println(s"$dimensions | ${sub} ${index / total.toFloat} | ${dt} | ${remaining}s remaining")
                 path -> dimensions
             }.toMap.pickle
 
-            val outFile = File(s"${base}/${folder}.pkl").write(pkl.value)
+            val outFile = File(s"${base}/${sub}.pkl").write(pkl.value)
 
             val dict = pkl.unpickle[Map[String, Dimensions]]
-            assert(dict.size == total)
-            assert(dict.keys.toSeq.sorted == directory.listRecursively.map(x => x.path.toString).toSeq.sorted)
+            val sortedEquivalence = dict.keys.toSeq.sorted == images.map(x => x.path.toString).toSeq.sorted
 
-        }
+            println(s"${directory} -- dictsize: ${dict.size} total: ${total}")
+            if (sortedEquivalence) {
+                println("Sorted Equivalent")
+            } else {
+                val dictKeys = dict.keys.toSeq.sorted.mkString(",")
+                val dirContents = images.map(x => x.path.toString).toSeq.sorted
+                println(s"Dict: ${dictKeys}\nDir :${dirContents} ")
+            }
 
-//          .foreach { x =>
-//            println(x.width, x.height)
-//        }
+        }.toList
 
-        //val op : IMOperation = new IMOperation()
-        //op.crop()
-
-        //val directory =
+        //println(s"Res: ${result}")
 
     }
-
 
     // Return the largest square crop
     def crop_square(d: Dimensions): CropBox = {
