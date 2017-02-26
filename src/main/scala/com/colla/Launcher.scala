@@ -5,7 +5,7 @@ import java.util.Date
 
 import better.files.File
 import org.im4java.core
-import org.im4java.core.{IMOperation, Info}
+import org.im4java.core.{ConvertCmd, IMOperation, Info}
 import org.im4java.process.ProcessStarter
 import org.im4java.utils.{ExtensionFilter, FilenameLoader}
 
@@ -33,7 +33,7 @@ object Launcher {
             "/Users/katz/Desktop/tria/2016a"
         )
 
-        pickleMetadata(dirs)
+        // pickleMetadata(dirs)
 
         dirs.map { sub =>
 
@@ -71,14 +71,14 @@ object Launcher {
             logger.debug("Pruned to " + metaSelection.size)
 
             val targetDirectory = s"${sub}_cropped"
-            cropDirectory(sub, targetDirectory, metaSelection)
+            cropDirectory(sub, metaSelection)
 
         }
 
 
     }
 
-    def cropDirectory(sourcePath: String, targetPath: String, metadata: Seq[ImageMetadata]) = {
+    def cropDirectory(sourcePath: String, metadata: Seq[ImageMetadata]) = {
 
         // Minimum Pixel Edge Width
         val minCrop = metadata
@@ -87,22 +87,29 @@ object Launcher {
           .toSeq
           .sortBy(x => x._1.width)
           .head
+          ._1
+          .width
+
+        logger.debug(s"Cropping to square ${minCrop}")
+//        val filter: ExtensionFilter = new ExtensionFilter("jpg")
+//        filter.setRecursion(false);
+//        val loader: FilenameLoader = new FilenameLoader(filter)
+//        val images: java.util.List[String] = loader.loadFilenames(sourcePath)
+
+        val cmd = new ConvertCmd();
+
+        metadata.foreach { m =>
+            val op = new IMOperation()
+            op.addImage(m.path) // Input placeholder
+            op.crop(m.crop.width, m.crop.height, m.crop.x, m.crop.y)
+            op.resize(minCrop, minCrop)
+            op.addImage(m.path.replace(".jpg", ".crop.resize.jpg"))
+            logger.debug(s"Running ${op.toString}")
+            cmd.run(op)
+        }
 
 
-        val filter: ExtensionFilter = new ExtensionFilter("jpg")
-        filter.setRecursion(false);
-        val loader: FilenameLoader = new FilenameLoader(filter)
-        val images: java.util.List[String] = loader.loadFilenames(sourcePath)
 
-        //        val cropped
-        //        val minimumSize =
-
-
-        val op = new IMOperation()
-
-        op.size
-
-        logger.debug(images.toString)
 
     }
 
