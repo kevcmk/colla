@@ -28,7 +28,7 @@ object Launcher {
         ProcessStarter.setGlobalSearchPath("/usr/local/opt/imagemagick@6/bin")
 
         val dirs = Seq(
-            // "/Users/katz/Desktop/tria/2014",
+            "/Users/katz/Desktop/tria/2014",
             "/Users/katz/Desktop/tria/2015",
             "/Users/katz/Desktop/tria/2016"
         )
@@ -43,6 +43,7 @@ object Launcher {
 
             logger.debug("Total Size " + metadata.size)
 
+            // val targetCount = 1350
             val targetCount = 1386
 
             // Select the largest squares
@@ -86,7 +87,10 @@ object Launcher {
         val croppedAndResizedPaths = metadata.sortBy(_.dateTime).map(x => x.path.replace(".jpg", ".crop.256.jpg"))
         val op = new IMOperation()
         op.addRawArgs("-geometry", "+0+0")
-        op.addRawArgs("-tile", "42x33")
+        op.addRawArgs("-tile", "33x42")
+        // op.addRawArgs("-tile", "42x33")
+        // op.addRawArgs("-tile", "30x45")
+        // op.addRawArgs("-tile", "45x30")
         croppedAndResizedPaths.foreach(x => op.addImage(x))
         op.addImage(sourcePath + "/montage.jpg")
         logger.debug(s"Running ${op.toString.substring(0, 256)}")
