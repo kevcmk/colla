@@ -1,20 +1,17 @@
 
-import java.nio.file.Path
-import java.time.LocalDateTime
 import java.util.Date
 
 import better.files.File
-import org.im4java.core
+import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.Logger
 import org.im4java.core.{ConvertCmd, IMOperation, Info, MontageCmd}
 import org.im4java.process.ProcessStarter
-import org.im4java.utils.{ExtensionFilter, FilenameLoader}
 
+import scala.collection.JavaConverters._
 import scala.pickling.Defaults._
-import scala.pickling.{functions, json}
 import scala.pickling.json._
-import scala.pickling.json.JSONPickle
+import scala.pickling.{functions, json}
 import scala.util.Random
-import com.typesafe.scalalogging.Logger
 
 
 object Launcher {
@@ -25,13 +22,11 @@ object Launcher {
 
         logger.debug("Starting...")
 
-        ProcessStarter.setGlobalSearchPath("/usr/local/opt/imagemagick@6/bin")
 
-        val dirs = Seq(
-            "/Users/katz/Desktop/tria/2014",
-            "/Users/katz/Desktop/tria/2015",
-            "/Users/katz/Desktop/tria/2016"
-        )
+        ProcessStarter.setGlobalSearchPath(ConfigFactory.load().getString("io.kevinkatz.cenaculo.imagemagick_bin"))
+
+        val dirs = ConfigFactory.load().getStringList("io.kevinkatz.cenaculo.source_directories").asScala
+
 
         // pickleMetadata(dirs)
 
